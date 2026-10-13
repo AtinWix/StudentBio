@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Story</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;700&display=swap">
+<style>
+/* Layout: one card per question, centred, fits a 16:9 screen without scrolling; stacks on phones */
+:root{
+  --bg:#eef3f1; --card:#ffffff; --ink:#1d2b28; --muted:#5b6e69;
+  --accent:#1f7a68; --accent-ink:#ffffff; --soft:#dcebe6; --line:#c9d8d3;
+  --font:"Lexend",Verdana,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:18px;line-height:1.4;
+  display:flex;align-items:center;justify-content:center;padding:16px}
+.card{background:var(--card);width:100%;max-width:1150px;min-height:min(620px,calc(100vh - 32px));
+  border-radius:18px;box-shadow:0 6px 24px rgba(20,60,50,.10);padding:32px 44px;display:flex;flex-direction:column;gap:20px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-weight:700;color:var(--accent);font-size:20px}
+.bar{flex:1;max-width:420px;height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:5px}
+h1{font-size:34px;margin:0;text-wrap:balance}
+h2{font-size:30px;margin:0;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+.body{flex:1;display:flex;flex-direction:column;gap:16px;justify-content:center}
+label.field{display:flex;flex-direction:column;gap:8px;font-weight:500}
+input[type=text]{font:inherit;font-size:22px;padding:12px 16px;border:2px solid var(--line);border-radius:12px;
+  background:var(--card);color:var(--ink);width:100%;max-width:520px}
+input:focus{outline:none;border-color:var(--accent)}
+.topics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.topic{font:inherit;text-align:left;border:2px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:14px;padding:20px;cursor:pointer;display:flex;flex-direction:column;gap:6px;min-width:0}
+.topic b{font-size:22px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font:inherit;font-size:20px;border:2px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:10px 20px;cursor:pointer}
+.chip:hover,.topic:hover{border-color:var(--accent)}
+.chip[aria-pressed=true],.topic[aria-pressed=true]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.topic[aria-pressed=true] .hint{color:var(--accent-ink)}
+.chip:focus-visible,.topic:focus-visible,.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.how{display:inline-block;font-size:15px;font-weight:500;color:var(--accent);background:var(--soft);border-radius:999px;padding:4px 12px}
+.row{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;font-size:20px;font-weight:500;border-radius:12px;padding:14px 28px;cursor:pointer;border:2px solid var(--accent)}
+.btn.main{background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.hint{font-size:16px;color:var(--muted)}
+.qnum{font-size:15px;font-weight:700;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.list{background:var(--soft);padding:14px 18px;border-radius:12px;font-size:16px;max-height:46vh;overflow:auto;
+  display:grid;grid-template-columns:1fr 1fr;gap:4px 28px}
+.list div{min-width:0}
+.list b{font-weight:500;color:var(--muted)}
+pre{white-space:pre-wrap;background:var(--soft);padding:14px;border-radius:12px;font-family:var(--font);font-size:15px;
+  max-height:40vh;overflow:auto;margin:0}
+.err{color:#a3312a;font-size:16px;min-height:1.2em}
+@media (max-width:760px){
+  body{font-size:17px;align-items:flex-start}
+  .card{padding:20px 16px;min-height:auto}
+  h1{font-size:26px} h2{font-size:23px}
+  .topics,.list{grid-template-columns:1fr}
+  .chip{font-size:18px;padding:9px 16px}
+  input[type=text]{font-size:19px}
+}
+@media (prefers-reduced-motion:no-preference){.chip,.topic,.btn{transition:border-color .15s,background .15s}}
+</style>
+</head>
+<body>
+<main class="card" id="app" aria-live="polite"></main>
+
+<script>
+(function(){
+/* ====== TEACHER SETTING ======
+   Paste the Microsoft Form pre-filled link here (with "x" typed in both boxes).
+   First "x" = Name, second "x" = Answers. Leave empty to use the Copy fallback. */
+const FORM_PREFILL_URL = "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=mUft038080m159qCPJXo2Y1qZCuioLZMr502V7pP7tRURE1GU0VVS0xKR005Tk0yUFRaWUhNVTNRRyQlQCNjPTEu&r37626d0eb7e040a69f485e57425b90d0=x&r18a07475da1645d291a050bf91311e4d=x";
+/* ============================ */
+
+/* type: one = tap one, many = tap all you want, text = a word or two. "other" adds a small box. */
+const one=(q,o,x={})=>({q,type:"one",o,other:true,...x});
+const many=(q,o,x={})=>({q,type:"many",o,other:true,...x});
+const text=(q,hint,x={})=>({q,type:"text",hint,...x});
+
+const TOPICS = {
+  house:{title:"The house where I grew up", blurb:"Your childhood home: the place, the people, the animals.", qs:[
+    text("Which country and town was it in?","Example: Sylhet, Bangladesh"),
+    one("Where was the house?",["In a city","In a town","In a village","In the countryside","By the sea","In the mountains"]),
+    one("What kind of home was it?",["A flat","A house","A farmhouse","A house with a garden","A small hut"]),
+    one("How many rooms?",["1","2","3","4","5","More than 5"],{other:false}),
+    many("Who lived there with you?",["Mother","Father","Brothers","Sisters","Grandmother","Grandfather","Aunts","Uncles","Cousins"]),
+    many("What animals were near the house?",["Chickens","Goats","Sheep","Cows","Donkeys","Horses","Camels","Dogs","Cats","Birds","No animals"]),
+    many("How did people travel?",["Walk","Bicycle","Motorbike","Bus","Car","Taxi","Train","Boat","Donkey or horse"]),
+    many("What could you hear in the morning?",["Birds","Animals","Traffic","The sea","People talking","Music","Children playing","Nothing — quiet"]),
+    one("What was the weather like in summer?",["Very hot","Hot","Warm","Cool","Rainy"]),
+    text("How much was bread then?","Example: 5 taka. Write \"don't know\" if you don't know."),
+    one("Was food cheap or expensive?",["Very cheap","Cheap","OK","Expensive","Very expensive"],{other:false}),
+    one("Your favourite place near the house?",["The market","The river","The fields","The beach","The park","A friend's house","The shop","The garden"]),
+    one("One word for the house:",["Happy","Busy","Noisy","Quiet","Warm","Cold","Small","Big"])
+  ]},
+  day:{title:"A special day", blurb:"A wedding, a festival, a party, a graduation…", qs:[
+    one("What was the day?",["A wedding","Eid","Christmas","New Year","A birthday","A graduation","A new baby","Nowruz","Diwali"]),
+    one("Whose day was it?",["Mine","My brother's","My sister's","My cousin's","My friend's","My whole family's","Everyone's"]),
+    text("What year was it?","Example: 2019"),
+    text("Which country and town?","Example: Kabul, Afghanistan"),
+    one("Where was it?",["At home","In a big hall","In a garden","In a restaurant","In a hotel","In the street","In a park"]),
+    one("How many people were there?",["Fewer than 10","10–50","50–100","100–300","More than 300"],{other:false}),
+    many("What food was there?",["Rice","Meat","Chicken","Fish","Bread","Soup","Salad","Fruit","Cake","Sweets"]),
+    many("What did you wear?",["New clothes","Traditional clothes","A suit","A dress","Gold jewellery","A hat or scarf"]),
+    one("How did you get there?",["Walked","By car","By bus","By taxi","By train","By plane","By boat","I was already there"]),
+    many("What did people do?",["Danced","Sang","Ate","Played music","Gave presents","Took photos","Prayed","Watched fireworks"]),
+    one("What was the weather like?",["Sunny","Hot","Warm","Cloudy","Rainy","Cold","Snowy"]),
+    text("A present you gave or got:","Example: money, a watch, gold"),
+    one("When did it finish?",["In the afternoon","In the evening","At midnight","Late at night","The next morning"],{other:false}),
+    one("How did you feel?",["Happy","Excited","Proud","Tired","Emotional","Nervous"])
+  ]},
+  person:{title:"A person who is important to me", blurb:"A family member, a friend, a teacher…", qs:[
+    one("Who is the person?",["My mother","My father","My grandmother","My grandfather","My sister","My brother","My aunt","My uncle","My friend","My teacher","My neighbour"]),
+    one("Is this person still alive?",["Yes","No, they have died"],{other:false,alive:true}),
+    text("What is their name?","Example: Fatma",{qp:"What was their name?"}),
+    text("Which country and town do they live in?","Example: Izmir, Turkey",{qp:"Which country and town did they live in?"}),
+    one("How old are they?",["Under 20","20–40","40–60","60–80","Over 80"],{other:false,qp:"How old were they when they died?"}),
+    one("What colour is their hair?",["Black","Brown","Blond","Red","Grey","White","No hair"],{qp:"What colour was their hair?"}),
+    one("How tall are they?",["Tall","Medium","Short"],{other:false,qp:"How tall were they?"}),
+    many("What are they like?",["Kind","Funny","Strict","Quiet","Clever","Hard-working","Generous","Chatty","Patient"],{qp:"What were they like?"}),
+    one("What is their job?",["Cook","Farmer","Teacher","Driver","Shopkeeper","Builder","Doctor or nurse","Student","Housewife","Works at home","Retired"],
+      {qp:"What was their job?",op:["Cook","Farmer","Teacher","Driver","Shopkeeper","Builder","Doctor or nurse","Student","Housewife","Worked at home","Retired"]}),
+    many("What do you do together?",["Cook","Eat","Walk","Go shopping","Go to the market","Watch TV","Play games","Talk on the phone","Go to the beach"],
+      {qp:"What did you do together?",op:["Cooked","Ate","Walked","Went shopping","Went to the market","Watched TV","Played games","Talked on the phone","Went to the beach"]}),
+    text("Their best food or dish:","Example: lentil soup"),
+    one("How often do you see or talk to them?",["Every day","Every week","Every month","Every year","Not often"],{other:false,qp:"How often did you see or talk to them?"}),
+    many("Do they have animals?",["A cat","A dog","Chickens","Birds","Goats","Sheep","No animals"],{qp:"Did they have animals?"}),
+    one("Why are they important to you?",["They helped me","They taught me a lot","They make me laugh","They looked after me","They are always there for me"],
+      {qp:"Why were they important to you?",op:["They helped me","They taught me a lot","They made me laugh","They looked after me","They were always there for me"]})
+  ]}
+};
+
+const app=document.getElementById("app");
+const S={step:"start",name:"",useName:"same",otherName:"",topic:null,q:0,ans:[]};
+
+function el(html){const t=document.createElement("template");t.innerHTML=html.trim();return t.content;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function header(){
+  let pct=0; const n=S.topic?TOPICS[S.topic].qs.length:13;
+  if(S.step==="nameuse")pct=3; if(S.step==="topic")pct=5; if(S.step==="q")pct=8+Math.round(S.q/n*84); if(S.step==="check")pct=94; if(S.step==="done")pct=100;
+  return '<div class="top"><div class="brand">My Story</div><div class="bar" aria-hidden="true"><i style="width:'+pct+'%"></i></div></div>';
+}
+function render(){
+  app.innerHTML="";
+  ({start:renderStart,nameuse:renderNameUse,topic:renderTopic,q:renderQ,check:renderCheck,done:renderDone})[S.step]();
+}
+
+function renderStart(){
+  app.append(el(header()+`
+  <div class="body">
+    <h1>Tell us your story</h1>
+    <p class="muted">Your teacher will use your answers to write a reading text for the class. Most answers are just one tap.</p>
+    <label class="field">What is your name?
+      <input type="text" id="name" maxlength="40" autocomplete="off" value="${esc(S.name)}">
+    </label>
+    <p class="err" id="err"></p>
+  </div>
+  <div class="row"><span></span><button class="btn main" id="next">Next</button></div>`));
+  const name=app.querySelector("#name");
+  name.oninput=()=>S.name=name.value;
+  name.onkeydown=e=>{if(e.key==="Enter")app.querySelector("#next").click();};
+  app.querySelector("#next").onclick=()=>{
+    if(!S.name.trim()){app.querySelector("#err").textContent="Please write your name.";return;}
+    S.step="nameuse";render();
+  };
+  name.focus();
+}
+
+function renderNameUse(){
+  app.append(el(header()+`
+  <div class="body">
+    <h2>In the text, which name can we use?</h2>
+    <span><span class="how">Tap ONE</span></span>
+    <div class="chips">
+      <button class="chip" id="nm-same" aria-pressed="${S.useName==="same"}">My name</button>
+      <button class="chip" id="nm-other" aria-pressed="${S.useName==="other"}">A different name</button>
+    </div>
+    <input type="text" id="other" maxlength="40" autocomplete="off" placeholder="Write the different name" value="${esc(S.otherName)}" ${S.useName==="other"?"":"hidden"} aria-label="Different name">
+    <p class="err" id="err"></p>
+  </div>
+  <div class="row"><button class="btn ghost" id="back">Back</button><button class="btn main" id="next">Next</button></div>`));
+  const other=app.querySelector("#other");
+  other.oninput=()=>S.otherName=other.value;
+  app.querySelector("#nm-same").onclick=()=>{S.useName="same";render();};
+  app.querySelector("#nm-other").onclick=()=>{S.useName="other";render();app.querySelector("#other").focus();};
+  app.querySelector("#back").onclick=()=>{S.step="start";render();};
+  app.querySelector("#next").onclick=()=>{
+    if(S.useName==="other"&&!S.otherName.trim()){app.querySelector("#err").textContent="Please write the different name.";return;}
+    S.step="topic";render();
+  };
+}
+
+function renderTopic(){
+  app.append(el(header()+`
+  <div class="body">
+    <h2>Choose ONE topic</h2>
+    <div class="topics">${Object.entries(TOPICS).map(([k,t])=>
+      `<button class="topic" data-k="${k}" aria-pressed="${S.topic===k}"><b>${esc(t.title)}</b><span class="hint">${esc(t.blurb)}</span></button>`).join("")}
+    </div>
+    <p class="err" id="err"></p>
+  </div>
+  <div class="row"><button class="btn ghost" id="back">Back</button><button class="btn main" id="next">Next</button></div>`));
+  app.querySelectorAll(".topic").forEach(b=>b.onclick=()=>{
+    if(S.topic!==b.dataset.k){S.topic=b.dataset.k;S.ans=[];S.q=0;} render();
+  });
+  app.querySelector("#back").onclick=()=>{S.step="nameuse";render();};
+  app.querySelector("#next").onclick=()=>{
+    if(!S.topic){app.querySelector("#err").textContent="Please choose a topic.";return;}
+    S.step="q";S.q=0;render();
+  };
+}
+
+function isPast(){
+  if(S.topic!=="person")return false;
+  const i=TOPICS.person.qs.findIndex(Q=>Q.alive), a=S.ans[i];
+  return !!(a&&a.picks[0]==="No, they have died");
+}
+function qText(Q){return isPast()&&Q.qp?Q.qp:Q.q;}
+function qOpts(Q){return isPast()&&Q.op?Q.op:Q.o;}
+function cur(){ /* answer object for the current question */
+  if(!S.ans[S.q])S.ans[S.q]={picks:[],other:"",text:""};
+  return S.ans[S.q];
+}
+
+function renderQ(){
+  const t=TOPICS[S.topic],Q=t.qs[S.q],a=cur(),total=t.qs.length;
+  const how=Q.type==="one"?"Tap ONE":Q.type==="many"?"Tap ALL that are true":"Write a word or two";
+  let input="";
+  if(Q.type==="text"){
+    input=`<input type="text" id="txt" maxlength="60" autocomplete="off" value="${esc(a.text)}" aria-label="${esc(qText(Q))}">
+           <p class="hint">${esc(Q.hint||"")}</p>`;
+  }else{
+    const opts=[...qOpts(Q)]; if(Q.other)opts.push("Other");
+    input=`<div class="chips">${opts.map(o=>`<button class="chip" data-o="${esc(o)}" aria-pressed="${a.picks.includes(o)}">${esc(o)}</button>`).join("")}</div>
+      <input type="text" id="oth" maxlength="40" autocomplete="off" placeholder="Write it here" value="${esc(a.other)}" ${a.picks.includes("Other")?"":"hidden"} aria-label="Other">`;
+  }
+  app.append(el(header()+`
+  <div class="body">
+    <p class="qnum">${esc(t.title)} · ${S.q+1} of ${total}</p>
+    <h2>${esc(qText(Q))}</h2>
+    <span><span class="how">${how}</span></span>
+    ${input}
+    <p class="err" id="err"></p>
+  </div>
+  <div class="row"><button class="btn ghost" id="back">Back</button><button class="btn main" id="next">${S.q===total-1?"Check my answers":"Next"}</button></div>`));
+
+  if(Q.type==="text"){
+    const i=app.querySelector("#txt"); i.oninput=()=>a.text=i.value; i.focus();
+    i.onkeydown=e=>{if(e.key==="Enter")app.querySelector("#next").click();};
+  }else{
+    const oth=app.querySelector("#oth"); oth.oninput=()=>a.other=oth.value;
+    app.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{
+      const o=b.dataset.o;
+      if(Q.type==="one"){
+        if(Q.alive&&a.picks[0]!==o)S.ans.length=S.q+1; /* tense changed: clear later answers */
+        a.picks=[o];
+      }
+      else{
+        const exclusive=/^No animals$|^Nothing/.test(o);
+        if(a.picks.includes(o))a.picks=a.picks.filter(p=>p!==o);
+        else a.picks=exclusive?[o]:[...a.picks.filter(p=>!/^No animals$|^Nothing/.test(p)),o];
+      }
+      app.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",a.picks.includes(c.dataset.o)));
+      oth.hidden=!a.picks.includes("Other"); if(!oth.hidden&&o==="Other")oth.focus();
+      app.querySelector("#err").textContent="";
+    });
+  }
+  app.querySelector("#back").onclick=()=>{if(S.q===0)S.step="topic";else S.q--;render();};
+  app.querySelector("#next").onclick=()=>{
+    const e=app.querySelector("#err");
+    if(Q.type==="text"&&!a.text.trim()){e.textContent="Please write a word or two.";return;}
+    if(Q.type!=="text"&&!a.picks.length){e.textContent="Please tap an answer.";return;}
+    if(a.picks.includes("Other")&&!a.other.trim()){e.textContent="Please write your answer in the box.";return;}
+    if(S.q===total-1)S.step="check";else S.q++;render();
+  };
+}
+
+function answerText(i){
+  const Q=TOPICS[S.topic].qs[i],a=S.ans[i]||{picks:[],other:"",text:""};
+  if(Q.type==="text")return a.text.trim();
+  return a.picks.map(p=>p==="Other"?a.other.trim():p).filter(Boolean).join(", ");
+}
+function summary(){
+  const t=TOPICS[S.topic];
+  const lines=["Topic: "+t.title,"Use name: "+(S.useName==="other"?S.otherName.trim():S.name.trim())];
+  t.qs.forEach((Q,i)=>lines.push(qText(Q).replace(/[:?]$/,"")+": "+answerText(i)));
+  return lines.join("\n");
+}
+
+function renderCheck(){
+  const t=TOPICS[S.topic];
+  app.append(el(header()+`
+  <div class="body">
+    <h2>Check your answers</h2>
+    <div class="list">${t.qs.map((Q,i)=>`<div><b>${i+1}.</b> ${esc(answerText(i))}</div>`).join("")}</div>
+    <p class="hint">To change an answer, press Back.</p>
+  </div>
+  <div class="row"><button class="btn ghost" id="back">Back</button><button class="btn main" id="send">Send</button></div>`));
+  app.querySelector("#back").onclick=()=>{S.step="q";S.q=t.qs.length-1;render();};
+  app.querySelector("#send").onclick=()=>{S.url=FORM_PREFILL_URL?buildFormUrl():null;S.step="done";render();};
+}
+
+function buildFormUrl(){
+  try{
+    const u=new URL(FORM_PREFILL_URL);
+    const keys=[...u.searchParams.keys()].filter(k=>u.searchParams.get(k).toLowerCase()==="x");
+    if(keys.length<2)return null;
+    u.searchParams.set(keys[0],S.name.trim());
+    u.searchParams.set(keys[1],summary());
+    return u.toString();
+  }catch(e){return null;}
+}
+
+function renderDone(){
+  if(S.url){
+    app.append(el(header()+`
+    <div class="body">
+      <h1>Nearly finished</h1>
+      <p>Press the button. The form opens with your answers. Then press <b>Submit</b>.</p>
+      <div><a class="btn main" href="${esc(S.url)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">Open the form</a></div>
+    </div>
+    <div class="row"><button class="btn ghost" id="back">Back</button><span></span></div>`));
+  }else{
+    app.append(el(header()+`
+    <div class="body">
+      <h1>Thank you!</h1>
+      <p>Press <b>Copy</b> and give your answers to your teacher.</p>
+      <pre id="sum">${esc(S.name.trim()+"\n"+summary())}</pre>
+      <div class="row" style="justify-content:flex-start"><button class="btn main" id="copy">Copy</button><span class="hint" id="copied"></span></div>
+    </div>
+    <div class="row"><button class="btn ghost" id="back">Back</button><span></span></div>`));
+    app.querySelector("#copy").onclick=async()=>{
+      const box=app.querySelector("#sum"),msg=app.querySelector("#copied");
+      try{await navigator.clipboard.writeText(box.textContent);msg.textContent="Copied.";}
+      catch(e){const r=document.createRange();r.selectNodeContents(box);const s=getSelection();s.removeAllRanges();s.addRange(r);
+        msg.textContent="Text selected. Press Ctrl+C.";}
+    };
+  }
+  app.querySelector("#back").onclick=()=>{S.step="check";render();};
+}
+
+render();
+})();
+</script>
+</body>
+</html>
