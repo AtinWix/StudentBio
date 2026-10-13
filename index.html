@@ -55,6 +55,14 @@ input:focus{outline:none;border-color:var(--accent)}
 .list b{font-weight:500;color:var(--muted)}
 pre{white-space:pre-wrap;background:var(--soft);padding:14px;border-radius:12px;font-family:var(--font);font-size:15px;
   max-height:40vh;overflow:auto;margin:0}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px;font-size:24px}
+.steps li{display:flex;gap:16px;align-items:flex-start}
+.steps .n{flex:none;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+  display:flex;align-items:center;justify-content:center;font-weight:700}
+.btn.big{display:inline-block;margin-top:10px;font-size:24px;padding:16px 36px;text-decoration:none}
+.fake{display:inline-block;background:#0f6cbd;color:#fff;font-weight:700;border-radius:6px;padding:4px 18px;margin-left:4px}
+.warn{font-size:22px;background:#fdecea;color:#8a1f17;border-radius:12px;padding:12px 16px}
+@media (max-width:760px){.steps{font-size:19px}.warn{font-size:18px}.btn.big{font-size:20px}}
 .err{color:#a3312a;font-size:16px;min-height:1.2em}
 @media (max-width:760px){
   body{font-size:17px;align-items:flex-start}
@@ -83,9 +91,12 @@ const one=(q,o,x={})=>({q,type:"one",o,other:true,...x});
 const many=(q,o,x={})=>({q,type:"many",o,other:true,...x});
 const text=(q,hint,x={})=>({q,type:"text",hint,...x});
 
+const FEATURES=["Mountains","Hills","A river","A lake","The sea","A beach","A forest","A desert","Fields","Farms","A market","Small shops","Tall buildings","A busy road","A park","A mosque","A church","A temple","A school"];
 const TOPICS = {
   house:{title:"The house where I grew up", blurb:"Your childhood home: the place, the people, the animals.", qs:[
-    text("Which country and town was it in?","Example: Sylhet, Bangladesh"),
+    text("Which country was it in?","Example: Bangladesh"),
+    text("Which town or city was it in?","Example: Sylhet"),
+    many("What was near the house?",FEATURES),
     one("Where was the house?",["In a city","In a town","In a village","In the countryside","By the sea","In the mountains"]),
     one("What kind of home was it?",["A flat","A house","A farmhouse","A house with a garden","A small hut"]),
     one("How many rooms?",["1","2","3","4","5","More than 5"],{other:false}),
@@ -103,7 +114,9 @@ const TOPICS = {
     one("What was the day?",["A wedding","Eid","Christmas","New Year","A birthday","A graduation","A new baby","Nowruz","Diwali"]),
     one("Whose day was it?",["Mine","My brother's","My sister's","My cousin's","My friend's","My whole family's","Everyone's"]),
     text("What year was it?","Example: 2019"),
-    text("Which country and town?","Example: Kabul, Afghanistan"),
+    text("Which country was it in?","Example: Afghanistan"),
+    text("Which town or city was it in?","Example: Kabul"),
+    many("What could you see near the place?",FEATURES),
     one("Where was it?",["At home","In a big hall","In a garden","In a restaurant","In a hotel","In the street","In a park"]),
     one("How many people were there?",["Fewer than 10","10–50","50–100","100–300","More than 300"],{other:false}),
     many("What food was there?",["Rice","Meat","Chicken","Fish","Bread","Soup","Salad","Fruit","Cake","Sweets"]),
@@ -119,7 +132,9 @@ const TOPICS = {
     one("Who is the person?",["My mother","My father","My grandmother","My grandfather","My sister","My brother","My aunt","My uncle","My friend","My teacher","My neighbour"]),
     one("Is this person still alive?",["Yes","No, they have died"],{other:false,alive:true}),
     text("What is their name?","Example: Fatma",{qp:"What was their name?"}),
-    text("Which country and town do they live in?","Example: Izmir, Turkey",{qp:"Which country and town did they live in?"}),
+    text("Which country do they live in?","Example: Turkey",{qp:"Which country did they live in?"}),
+    text("Which town or city do they live in?","Example: Izmir",{qp:"Which town or city did they live in?"}),
+    many("What is near their home?",FEATURES,{qp:"What was near their home?"}),
     one("How old are they?",["Under 20","20–40","40–60","60–80","Over 80"],{other:false,qp:"How old were they when they died?"}),
     one("What colour is their hair?",["Black","Brown","Blond","Red","Grey","White","No hair"],{qp:"What colour was their hair?"}),
     one("How tall are they?",["Tall","Medium","Short"],{other:false,qp:"How tall were they?"}),
@@ -321,9 +336,15 @@ function renderDone(){
   if(S.url){
     app.append(el(header()+`
     <div class="body">
-      <h1>Nearly finished</h1>
-      <p>Press the button. The form opens with your answers. Then press <b>Submit</b>.</p>
-      <div><a class="btn main" href="${esc(S.url)}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-block">Open the form</a></div>
+      <h1>Nearly finished! 2 more steps.</h1>
+      <ol class="steps">
+        <li><span class="n">1</span><div>Press this button:<br>
+          <a class="btn main big" id="go" href="${esc(S.url)}" target="_blank" rel="noopener">Open the form</a></div></li>
+        <li><span class="n">2</span><div>A new page opens. Your answers are already there.<br>
+          Go to the <b>bottom</b> of the page and press <span class="fake">Submit</span></div></li>
+      </ol>
+      <p class="warn">⚠ If you do NOT press <b>Submit</b>, your teacher gets <b>nothing</b>.</p>
+      <p class="hint">When you see <b>"Your response was submitted"</b>, you are finished.</p>
     </div>
     <div class="row"><button class="btn ghost" id="back">Back</button><span></span></div>`));
   }else{
